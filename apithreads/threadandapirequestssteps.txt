@@ -1,0 +1,129 @@
+Threads and API requests
+Lab Objective
+The objective of this lab is to learn to apply Python threads to making API requests. Rather than processes these requests sequentially, we want them all to execute seemingly "at the same time".
+
+More truly, it's more like lighting fuses on n fireworks.
+
+Traditionally, python wants to light a firework, wait for it's show to complete, before moving onto lighting the next one. This kind of sequential progression will continue until all n fireworks have been completed.
+
+However, in some cases, as is with making thousands of API requests as quickly as possible, this kind of head-of-line-blocking is not desirable. To invoke our fireworks analogy, threads do not let us create more lighters, but we can change the way Python handles work loads. With threads, we can tell Python to start lighting fuses on fireworks, one after another, and not stop until all n fuses have been lit.
+
+Procedure
+Create a new space in which to work.
+
+student@bchd:~$ mkdir -p ~/mycode/apithreads/
+
+Move into the directory.
+
+student@bchd:~$ cd ~/mycode/apithreads/
+
+Create a new script.
+
+student@bchd:~/mycode/apithreads$ vim apiRequestsNoThreads.py
+
+Copy and paste the following into your script:
+
+#!/usr/bin/python3
+"""API requests without threads | rzfeeser@alta3.com"""
+
+# standard library
+from time import time
+
+# python3 -m pip install requests
+import requests
+
+# a list of apis from https://api.le-systeme-solaire.net/rest/bodies/
+url_list = [
+    "https://api.le-systeme-solaire.net/rest/bodies/lune",
+    "https://api.le-systeme-solaire.net/rest/bodies/phobos",
+    "https://api.le-systeme-solaire.net/rest/bodies/deimos",
+    "https://api.le-systeme-solaire.net/rest/bodies/europe",
+    "https://api.le-systeme-solaire.net/rest/bodies/callisto",
+    "https://api.le-systeme-solaire.net/rest/bodies/himalia",
+    "https://api.le-systeme-solaire.net/rest/bodies/elara",
+    "https://api.le-systeme-solaire.net/rest/bodies/sinope",
+    "https://api.le-systeme-solaire.net/rest/bodies/leda",
+    "https://api.le-systeme-solaire.net/rest/bodies/thebe",
+]
+
+def download_file(url):
+    html = requests.get(url, stream=True)
+    return html.status_code
+
+start = time()
+
+for url in url_list:
+    print(download_file(url))
+
+# display the total run time
+print(f'Time taken: {time() - start}')
+Save and exit with :wq
+
+Great! Run your script.
+
+student@bchd:~/mycode/apithreads$ python3 apiRequestsNoThreads.py
+
+The script should complete and show you a run time. An eternity! We can do better...
+
+student@bchd:~/mycode/apithreads$ vim apiRequestsThreads.py
+
+Create the following
+
+#!/usr/bin/python3
+"""API requests with threads | rzfeeser@alta3.com"""
+
+# standard library
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from time import time
+
+# python3 -m pip install requests
+import requests
+
+
+url_list = [
+    "https://api.le-systeme-solaire.net/rest/bodies/lune",
+    "https://api.le-systeme-solaire.net/rest/bodies/phobos",
+    "https://api.le-systeme-solaire.net/rest/bodies/deimos",
+    "https://api.le-systeme-solaire.net/rest/bodies/europe",
+    "https://api.le-systeme-solaire.net/rest/bodies/callisto",
+    "https://api.le-systeme-solaire.net/rest/bodies/himalia",
+    "https://api.le-systeme-solaire.net/rest/bodies/elara",
+    "https://api.le-systeme-solaire.net/rest/bodies/sinope",
+    "https://api.le-systeme-solaire.net/rest/bodies/leda",
+    "https://api.le-systeme-solaire.net/rest/bodies/thebe",
+]
+
+def download_file(url):
+    html = requests.get(url, stream=True)
+    return html.status_code
+
+start = time()
+
+processes = []
+
+# we want to be careful with the number of workers
+# if you are making thousands of requests, does your target have limiting engaged?
+# beware you don't overload internal or external services; 5 to 10 is fine for most scripts
+with ThreadPoolExecutor(max_workers=5) as executor:
+    for url in url_list:
+        processes.append(executor.submit(download_file, url))   # add a new task to the threadpool and store in processes list
+
+for task in as_completed(processes):    # yields the items in processes as they complete (it finished or was canceled)
+    print(task.result())
+
+# display the total run time 
+print(f'Time taken: {time() - start}')
+Save and exit with :wq
+
+Great! Run your script.
+
+student@bchd:~/mycode/apithreads$ python3 apiRequestsThreads.py
+
+The script should execute without error, and show a massive improvement! Answer the following questions:
+
+Q: Why would I read for the concurrent.futures library, as opposed to the threading library?
+A: The threading is a bit more hands on, use it if you need to tightly coordinate state between several threads. If you have no desire to maintain state between threads (such as is with our HTTP requests), concurrent.futures is appropriate.
+Q: If a thread is CPU intensive, will adding threading speed things up?
+A: Generally, no. Python's GIL will allow about 100 bytes of information to process on a thread before the GIL is passed to the next thread (if any). If threads are always waiting for the GIL, adding threads won't speed up your script. However, if your threads do an incredible amount of "waiting" (as is with often with most client and server transactions), threads might be a helpful addition.
+Q: Is concurrent.futures part of the standard library?
+A: Yes. You can find documentation here https://docs.python.org/3/library/concurrent.futures.html
