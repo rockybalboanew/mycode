@@ -1,0 +1,157 @@
+Introduction to Asynchronous Programming with AsyncIO
+Lab Objective
+The objective of this lab is to learn about AsyncIO library, and its unique way of working.
+
+Parallelism consists of performing multiple operations at the same time. Multiprocessing is a means to effect parallelism, and it entails spreading tasks over a computer’s central processing units (CPUs, or cores). Multiprocessing is well-suited for CPU-bound tasks: tightly bound for loops and mathematical computations usually fall into this category. One approach within python is to use the multiprocessing package within the standard library.
+
+Concurrency is a slightly broader term than parallelism. It suggests that multiple tasks have the ability to run in an overlapping manner. (There’s a saying that concurrency does not imply parallelism.) A way to achieve concurrency is with the threading, concurrent.futures, and asyncio packages.
+
+Asynchronous routines that can be paused while waiting for their ultimate result, to let other routines run. Through this mechanism, it gives the feeling of concurrency. Asynchronous behavior does not require or imply threads or additional processes.
+
+Threading is a concurrent execution model whereby multiple threads take turns executing tasks. One process can contain multiple threads.
+
+async IO is a single threaded, single process design. It is available within several other languages (Go, Scala, C) however, within Python, is available via the asyncio package. The asyncIO model uses cooperative multitasking to give a feeling of concurrency despite using a single thread and single process. Coroutines (a central feature of asyncIO) can be scheduled concurrently, but they are not inherently concurrent. It is very much a style of concurrent programming, but it is not parallelism. It’s more closely aligned with threading than with multiprocessing but is very much distinct from both of these and is a standalone member in concurrency’s bag of tricks.
+
+Resources:
+
+async IO - https://docs.python.org/3/library/asyncio.html
+AIOHTTP - https://docs.aiohttp.org/en/latest/
+Procedure
+Answer the following questions:
+
+Q: Is asyncIO part of the Python standard library?
+A: Yes, you can read about its documentation at https://docs.python.org/3/library/asyncio.html
+Q: Will asyncIO make my code multithreaded?
+A: No. Using asyncio in your Python code will not make your code multithreaded. It will not cause multiple Python instructions to be executed at once, and it will not in any way allow you to sidestep the GIL.
+Q: What is a CPU bound process? Is asyncIO used for CPU bound processes?
+A: A process that has a series of instructions needed executed one after another until a result has been achieved. They will make full use of the computer's facilities. AsyncIO is not for CPU bound processes.
+Q: What is a IO-bound process? Will asyncIO help with it?
+A: Yes. In this case, it is fairly common for the CPU to spend a lit of time doing nothing at all because the one thing that's currently being done is waiting for something else.
+Q: What is "best"? Parallelism, concurrency, or threading?
+A: It depends on the application. Generally, parallelism is going to be best for CPU bound tasks, whereas, IO bound tasks are best served with concurrency.
+Start in the home directory.
+
+student@bchd:~$ cd
+
+Create a space to work in.
+
+student@bchd:~$ mkdir ~/mycode/asyncrequest
+
+Install aiohttp.
+
+student@bchd:~$ python3 -m pip install aiohttp
+
+Create a script that uses aiohttp and asyncio.
+
+student@bchd:~$ vim ~/mycode/asyncrequest/async01.py
+
+Create the following:
+
+#!/usr/bin/env python3
+"""RZFeeser | rzfeeser@alta3.com"""
+
+# standard library
+import aiohttp
+import asyncio
+
+# create a coroutine called 'main'
+async def main():           # the async keyword creates a coroutine to be run asynchronously
+
+    async with aiohttp.ClientSession() as session:
+        # request the pokemon 'Mew' (pokemon number 151)
+        pokemon_url = 'https://pokeapi.co/api/v2/pokemon/151'
+        async with session.get(pokemon_url) as resp:
+            pokemon = await resp.json()     # passes control back to the event loop suspending execution of coroutine until
+                                            # the awaited result is returned
+            print(pokemon['name'])
+
+asyncio.run(main())
+Save and exit your script with :wq
+
+Try running your script. (NOTE: any version of Python before 3.7 will not have asyncio.run())
+
+student@bchd:~$ python3 ~/mycode/asyncrequest/async01.py
+
+Great! So what if we wanted 150 API requests performed in a very rapid maner, with asyncIO. Let's try creating a loop, and running the API look-ups asynchronously.
+
+student@bchd:~$ vim ~/mycode/asyncrequest/async02.py
+
+Create the following:
+
+#!/usr/bin/env python3
+"""Alta3 Research | RZFeeser
+   Demonstrating how to use the asyncio library by utilizing the pokeapi.co
+   to perform 150 HTTP GET lookups"""
+
+# standard library
+import asyncio
+import time
+
+# python3 -m pip install aiohttp
+import aiohttp
+
+# start a timer to determine how quickly these lookups are performed
+start_time = time.time()
+
+async def main():
+
+    async with aiohttp.ClientSession() as session:
+        # loop from 1 to 150 (non inclusive of 151)
+        for number in range(1, 151):
+            pokemon_url = f'https://pokeapi.co/api/v2/pokemon/{number}'    # number is defined by the range for-loop
+            async with session.get(pokemon_url) as resp:     # the coroutine we are defining should be run async with an event loop
+                pokemon = await resp.json()         # pass control back to the event loop (do other things until this happens)
+                print(pokemon['name'])
+
+asyncio.run(main())
+print("--- %s seconds ---" % (time.time() - start_time))
+Save and exit with :wq
+
+Try running your script.
+
+student@bchd:~$ python3 ~/mycode/asyncrequest/async02.py
+
+Let's compare the result to a synchronous series of requests. This can be achieved with a simple for loop, and the requests library.
+
+student@bchd:~$ vim ~/mycode/asyncrequest/async03_no_async.py
+
+Create the following script:
+
+#!/usr/bin/python3
+"""Alta3 Research | RZFeeser@alta3.com
+   Synchronous requests, this should be much slower than the asynchronous method"""
+   
+# standard library
+import time
+
+# python3 -m pip install requests
+import requests
+
+def main():
+    # start a timer
+    start_time = time.time()
+
+    # typical loop
+    for number in range(1, 151):
+        url = f'https://pokeapi.co/api/v2/pokemon/{number}'
+        resp = requests.get(url)
+        pokemon = resp.json()
+        print(pokemon['name'])
+
+    print("--- %s seconds ---" % (time.time() - start_time))
+    
+# call our script if it was not imported
+if __name__ == "__main__":
+    main()
+Save and exit with :wq
+
+Run the script. Our theory is that this one will take quite a bit more time.
+
+student@bchd:~$ python3 ~/mycode/asyncrequest/async03_no_async.py
+
+The script should execute correctly, but notice how much slower this method is. Answer the following questions:
+
+Q: Why was aiohttp required? Why didn't we just use requests?
+A: Within a single thread, requests is a blocking synchronous library. When it is used in conjunction with threads, this does not present a problem, however, if we are working with an asynchronous library, like asyncio, we need a client that behaves aynchronously.
+Q: Where can I read more about aiohttp and the design decisions?
+A: Read more about the aiohttp client and how it differs from requests library here, https://docs.aiohttp.org/en/latest/http_request_lifecycle.html#why-is-aiohttp-client-api-that-way
