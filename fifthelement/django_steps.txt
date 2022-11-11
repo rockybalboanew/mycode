@@ -1,0 +1,378 @@
+Lab Objective
+The objective of this lab is to provide a short overview of the web-framework, Django. Per the Django Project homepage, "Django is a high-level Python Web framework that encourages rapid development and clean, pragmatic design. Built by experienced developers, it takes care of much of the hassle of Web development, so you can focus on writing your app."
+
+Django is a full-stack web framework for Python, whereas Flask is a lightweight and extensible Python web framework. Django's batteries-included approach enable programmers to accomplish common web development tasks without using third-party tools and libraries. Django makes it easier for Django developers to accomplish common web development tasks like user authentication, URL routing and database schema migration. Also, Django accelerates custom web application development by providing built-in template engine, ORM system, and bootstrapping tool. However, Django lacks some of the robust features provided by Python.
+
+On the other hand, Flask is a lightweight, minimalist web framework. It lacks some of the built-in features provided by Django, but it helps Python developers to keep the core of a web application simple and extensible.
+
+Still confused? Cars have automatic or standard transmissions. If you find the less-is-more approach to driving with an automatic transmission appealing, Django might be for you. If you feel more in control with a gearbox and clutch, than Flask might be your go to framework. There is not really a right or wrong argument to be had, as much as which solution works best for your brain.
+
+Resources:
+
+Read more about the Django project here: https://www.djangoproject.com/
+Django uses a modeling style called MVT (Model, View, Template). Read more about these concepts here:
+Model: https://docs.djangoproject.com/en/2.2/topics/templates/
+Procedure
+Within a terminal space, move into your home directory.
+
+student@bchd:~$ cd
+
+Make sure to install the virtual environment package.
+
+student@bchd:~$ sudo apt install virtualenv -y
+
+Create the virtual env and then activate it.
+
+student@bchd:~$ python3 -m venv djintro
+
+Start your virtual environment.
+
+student@bchd:~$ source ./djintro/bin/activate
+
+Install Django within the virtual environment.
+
+(djintro) student@bchd:~$ pip install Django
+
+Check your version using django-admin.
+
+(djintro) student@bchd:~$ django-admin --version
+
+The first time using Django, it is required to auto-generate some code that establishes a Django project. That's a bit different than the standard import approach.
+
+A Django project is, effectively, a collection of settings for an instance of Django, including database configuration, Django-specific options and application-specific settings. This is completed with a django-admin utility. Type the following to create a new project fifthelement
+
+(djintro) student@bchd:~$ django-admin startproject fifthelement
+
+Locally, fifthelement/ was created.
+
+(djintro) student@bchd:~$ ls
+
+Let us use tree to explore it. To be clear, tree has nothing to do with Django. It is just a tool for exploring directory structures.
+
+(djintro) student@bchd:~$ sudo apt install tree -y
+
+Run tree against your new directory.
+
+(djintro) student@bchd:~$ tree fifthelement
+
+fifthelement/
+ - fifthelement
+     - __init__.py
+     - settings.py
+     - urls.py
+     - wsgi.py
+ - manage.py
+The files the tree utility exposed are:
+
+The outer fifthelement/ root directory is just a container for your project. Its name doesn’t matter to Django; you can rename it to anything you like.
+manage.py - A command-line utility that lets you interact with this Django project in various ways. You can read all the details about manage.py in django-admin and manage.py
+The inner fifthelement/ directory is the actual Python package for your project. Its name is the Python package name you’ll need to use to import anything inside it (e.g. fifthelement.urls).
+fifthelement/__init__.py - An empty file that tells Python that this directory should be considered a Python package. If you’re a Python beginner, read more about packages in the official Python docs.
+fifthelement/settings.py - Settings/configuration for this Django project. Django settings will tell you all about how settings work.
+fifthelement/urls.py - The URL declarations for this Django project; a “table of contents” of your Django-powered site. You can read more about URLs in URL dispatcher.
+fifthelement/wsgi.py - An entry-point for WSGI-compatible web servers to serve your project. See How to deploy with WSGI for more details.
+Lets explore the development server we just spawned. Move into the directory, fifthelement/
+
+(djintro) student@bchd:~$ cd fifthelement/
+
+Establish a shell variable for the host we expect to send as a HTTP_HOST header to our Django server.
+
+(acme_env) student@bchd:~/fifthelement$ AUX1=aux1-`hostname --domain`.live.alta3.com
+
+Change the settings.py file to allow for your aux1 HTTP_HOST header.
+
+(acme_env) student@bchd:~/fifthelement$ sed -i "s/ALLOWED_HOSTS = \[\]/ALLOWED_HOSTS = \['$AUX1', '127.0.0.1'\]/g" fifthelement/settings.py
+
+Allow CSRF Tokens to trust your host as well.
+
+(boxst) student@bchd:~/fifthelement$ echo "CSRF_TRUSTED_ORIGINS = ['https://$AUX1', 'http://127.0.0.1']" >> fifthelement/settings.py
+
+Verify your Django project works. Change into the outer fifthelement/ directory, then run the following command to launch your server.
+
+(djintro) student@bchd:~/fifthelement$ python3 manage.py runserver
+
+Split your screen with tmux with the following two commands
+
+CTRL + b (press both keys at the same time)
+" (you will need to use the SHIFT key)
+In your new screen, try to curl against your webserver (by default Django runs on port 8000)
+
+student@bchd:~$ curl http://127.0.0.1:8000/
+
+You should get back something like HTML data that includes the words, "Congratulations!" along with some other HTML data suitable for rendering in a browser. You can scroll up and down using CTRL + b and then [. Use q to quit the scrolling.
+
+Close your split-screen by typing exit in your current split-screen.
+
+student@bchd:~$ exit
+
+Within the window hosting your Django server, stop the server with CTRL + c
+
+If you want to change the server’s port, pass it as a command-line argument. For instance, start on port 2224.
+
+(djintro) student@bchd:~/fifthelement$ python3 manage.py runserver 2224
+
+Notice the service is now listening on port 2224.
+
+Stop your Django server with CTRL + c
+
+If you want to change the server’s IP, pass it along with the port. For example, to listen on all available public IPs (which is useful if you are running Vagrant or want to show off your work on other computers on the network), use:
+
+(djintro) student@bchd:~/fifthelement$ python3 manage.py runserver 0:2224
+
+Stop your Django server with CTRL + c
+
+Let's try building a project from scratch. Create an app called, altaapp01.py
+
+(djintro) student@bchd:~/fifthelement$ vim altaapp01.py
+
+Place the following settings into the file.
+
+#!/usr/bin/python3
+"""Alta3 Research
+All in one Django settings to drive Djanjo webserver"""
+
+DEBUG = True                            # verbose output and prevent config of
+                                        # ALLOWED_HOSTS variable
+
+SECRET_KEY = 'Youcandanc3youcanjiv3'    # required for a django app
+
+ROOT_URLCONF = __name__                 # The path to the URIs (called URLs here) with the 'views' in
+                                        # the project. The var __name__ means "look in this file"
+
+urlpatterns = []                        # urlpatterns usually defined by ROOT_URLCONF
+Save and exit with :wq
+
+Run the server
+
+(djintro) student@bchd:~/fifthelement$ django-admin runserver --pythonpath=. --settings=altaapp01
+
+Try testing via curl after splitting the screen.
+
+student@bchd:~$ curl http://127.0.0.1:8000/
+
+Close your second screen with exit
+
+Stop the server with CTRL + c
+
+Create a new app, altaapp02.py
+
+(djintro) student@bchd:~/fifthelement$ vim altaapp02.py
+
+Ensure the app looks like the following:
+
+#!/usr/bin/python3
+"""Alta3 Research
+All in one Django settings to drive Djanjo webserver
+Includes a simple home endpoint and a matching
+'view' within urlpatterns"""
+
+# python3 -m pip install django
+from django.urls import re_path
+from django.http import HttpResponse
+
+DEBUG = True                            # verbose output and prevent config of
+                                        # ALLOWED_HOSTS variable
+
+SECRET_KEY = 'Youcandanc3youcanjiv3'    # required for a django app
+
+ROOT_URLCONF = __name__                 # The path to the URIs (called URLs here) with the 'views' in
+                                        # the project. The var __name__ means "look in this file"
+
+def home(request):
+    return HttpResponse('Welcome to the Alta3 App\'s Homepage!')   # send back an HTTP 200
+
+# now we have urlpatterns to defined
+# regex r'^$' matches "nothing" and points to the function "home"
+urlpatterns = [
+    re_path(r'^$', home),
+]
+Save and exit with :wq
+
+Run the server
+
+(djintro) student@bchd:~/fifthelement$ django-admin runserver --pythonpath=. --settings=altaapp02
+
+Try testing via curl after splitting the screen.
+
+student@bchd:~$ curl http://127.0.0.1:8000/
+
+Note the response is what was defined within our def home() function.
+
+Close your second screen with exit
+
+Stop the server with CTRL + c
+
+Create a new settings file, altaapp03.py
+
+(djintro) student@bchd:~/fifthelement$ vim altaapp03.py
+
+Create the following:
+
+#!/usr/bin/python3
+"""Alta3 Research
+All in one Django settings to drive Djanjo webserver
+
+Includes a simple home endpoint and a matching
+'view' within urlpatterns
+
+The color of the heading may be scraped via ?color=<color>
+Example:
+127.0.0.1:8000/?color=green
+127.0.0.1:8000/?color=purple"""
+
+# python3 -m pip install django
+from django.urls import re_path
+from django.http import HttpResponse
+
+DEBUG = True                            # verbose output and prevent config of
+                                        # ALLOWED_HOSTS variable
+
+SECRET_KEY = 'Youcandanc3youcanjiv3'    # required for a django app
+
+ROOT_URLCONF = __name__                 # The path to the URIs (called URLs here) with the 'views' in
+                                        # the project. The var __name__ means "look in this file"
+
+# return an HTML template
+def home(request):
+    """return a template to any lookups to home with optional color"""
+
+    # NOTE: The following directly snags input directly from the URIs
+    # user input should always be scrutinized to avoid security issues like XSS
+    color = request.GET.get('color', '')   # scrape out the parameter from ?color=<color>
+
+    return HttpResponse(
+        '<h1 style="color:' + color + '">Welcome to the Alta3 App\'s Homepage!</h1>'
+    )  # don't use user input like that in real projects!
+
+urlpatterns = [
+    re_path(r'^$', home),
+]
+Save and exit with :wq
+
+Run the server
+
+(djintro) student@bchd:~/fifthelement$ django-admin runserver --pythonpath=. --settings=altaapp03
+
+Try testing via curl after splitting the screen.
+
+student@bchd:~$ curl http://127.0.0.1:8000/?color=green
+
+Note the response is what was defined within our def home() function, and has the variable from the URI stripped out and applied to the HTML template.
+
+(djintro) student@bchd:~/fifthelement$ curl http://127.0.0.1:8000/?color=blue
+
+Close your second screen with exit
+
+Stop the server with CTRL + c
+
+Jinja works with Django as well! Sort of. Jinja actually grew out of the "Django templating engine." Suffice to say if you know Jinja, you'll feel at home making templatings within Django.
+
+(djintro) student@bchd:~/fifthelement$ vim altaapp04.py
+
+Let's return an HTML template.
+
+#!/usr/bin/python3
+"""Alta3 Research
+All in one Django settings to drive Djanjo webserver
+
+Includes a simple home endpoint and a matching
+'view' within urlpatterns
+
+The color of the heading may be scraped via ?color=<color>
+Example:
+127.0.0.1:8000/?color=green
+127.0.0.1:8000/?color=purple"""
+
+# python3 -m pip install django
+from django.urls import re_path
+from django.http import HttpResponse
+
+DEBUG = True                            # verbose output and prevent config of
+                                        # ALLOWED_HOSTS variable
+
+SECRET_KEY = 'Youcandanc3youcanjiv3'    # required for a django app
+
+ROOT_URLCONF = __name__                 # The path to the URIs (called URLs here) with the 'views' in
+                                        # the project. The var __name__ means "look in this file"
+
+# engage django templating engine (more a less, jinja)
+TEMPLATES = [{'BACKEND': 'django.template.backends.django.DjangoTemplates'},]
+
+# return an HTML template
+def home(request):
+    """return a template to any lookups to home with optional color"""
+
+    # NOTE: The following directly snags input directly from the URIs
+    # user input should always be scrutinized to avoid security issues like XSS
+    color = request.GET.get('color', '')   # scrape out the parameter from ?color=<color>
+
+    return HttpResponse(
+        '<h1 style="color:' + color + '">Welcome to the Alta3 App\'s Homepage!</h1>'
+    )  # don't use user input like that in real projects!
+
+
+
+from django.template import engines
+from django.template.loader import render_to_string
+
+def about(request):
+    title = 'Alta3App'
+    author = 'RZFeeser'
+
+    # Django templating engine is very close to Jinja templating
+    about_template = '''<!DOCTYPE html>
+    <html>
+    <head>
+      <title>{{ title }}</title>
+    </head>
+    <body>
+      <h1>About {{ title }}</h1>
+      <p>This Website was developed by {{ author }}.</p>
+      <p>Now using the Django's Template Engine.</p>
+      <p><a href="{% url 'homepage' %}">Return to the homepage</a>.</p>
+    </body>
+    </html>
+    '''
+
+    django_engine = engines['django']
+    template = django_engine.from_string(about_template)
+    html = template.render({'title': title, 'author': author})
+
+    return HttpResponse(html)
+
+# match on "nothing" for the homepage
+# math on "about/" for the about page
+urlpatterns = [
+    re_path(r'^$', home, name='homepage'),
+    re_path(r'^about/$', about, name='aboutpage'),
+]
+Save and exit with :wq
+
+Run the server
+
+(djintro) student@bchd:~/fifthelement$ django-admin runserver --pythonpath=. --settings=altaapp04
+
+Try testing via curl after splitting the screen.
+
+student@bchd:~$ curl http://127.0.0.1:8000/?color=green
+
+Try testing the new /about endpoint
+
+student@bchd:~$ curl http://127.0.0.1:8000/about/
+
+Close your second screen with exit
+
+Stop the server with CTRL + c
+
+Deactivate the virtualenv
+
+(djintro) student@bchd:~/fifthelement$ deactivate
+
+Consider yourself introduced to Django! If you are saving your code via an SCM, you can move your working folder into the ~/mycode folder and then commit it:
+
+cd
+mv ~/fifthelement ~/mycode/
+cd ~/mycode
+git add *
+git commit -m "introduction to Django"
+git push origin HEAD
